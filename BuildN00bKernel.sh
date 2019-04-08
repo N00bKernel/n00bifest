@@ -24,6 +24,7 @@ echo ""
 # 
 # Configure Local Directories
 #
+# libncurses5 <-- bhosdiwala
 # kernel source dir
 SOURCE_DIR=~/AndroidSystemDev/potter/potter_kernel
 # kernel build / work dir
@@ -120,4 +121,4 @@ sleep 5
 echo "[I] rebooting device to recovery mode...."
 adb reboot recovery
 # verify the toolchain used
-cat out/include/generated/compile.h
+cat $WORK_DIR/include/generated/compile.h
