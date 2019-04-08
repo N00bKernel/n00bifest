@@ -22,45 +22,55 @@ echo "Hobby     : Banging bitches like you !"
 echo ""
 ####################### N00b Lab Initialization #######################
 # 
-# Configure Local Directories
+# Configure Local Directories & Variables
 #
 # libncurses5 <-- bhosdiwala
-# kernel source dir
-SOURCE_DIR=~/AndroidSystemDev/potter/potter_kernel
-# kernel build / work dir
-WORK_DIR=~/AndroidSystemDev/potter/potter_kernel/out
-# kernel out dir
-KERNEL_DIR=~/AndroidSystemDev/potter/potter_kernel/out/arch/arm64/boot
-# archiving dir
-SHIPPING_DIR=~/AndroidSystemDev/potter/N00bKernel
-# release dir
-RELEASE_DIR=~/AndroidSystemDev/potter/N00bReleases
-# OTA server dir
-OTA_DIR=/var/www/html/N00bKernelDownloads
-# N00bKernel update dir (on device)
-DEVICE_UPDATE_DIR=/sdcard/N00bKernelUpdate
-# Toolchain dir
-TOOLCHAIN_DIR=~/Toolchains
-# Configure Environmental Variables
-#
 # ARCH & SUBARCH
 ARCH=arm64
 SUBARCH=arm64
+# workspace
+WORKSPACE=~/Nooblab
+# server root
+SERVER_DIR=/var/www/html
+# Toolchain dir
+TOOLCHAIN_DIR=~/Toolchains
+CLANG_DIR=AOSP/clang
+GCC_DIR=AOSP/gcc
+# device def_config
 CONFIG=potter_defconfig
+# CC flag
 CC=clang
-CLANG_DIR=$TOOLCHAIN_DIR/AOSP/linux-x86-android-9.0.0_r1-clang-4691093
-GCC_DIR=$TOOLCHAIN_DIR/AOSP/aarch64-linux-android-4.9
 CLANG_TRIPLE_PREFIX=aarch64-linux-gnu-
 CROSS_COMPILE_PREFIX=aarch64-linux-android-
-# No of jobs
-JOBS=$(nproc --ignore 4)
 # Kernel image Name
 KERNEL=Image.gz
+# No of jobs
+JOBS=$(nproc --ignore 4)
+#######################################################################
+# kernel source dir
+SOURCE_DIR=$WORKSPACE/source
+# kernel build / work dir
+OUT_DIR=$SOURCE_DIR/out
+# kernel out dir
+KERNEL_DIR=$OUT_DIR/arch/$ARCH/boot
+# archiving dir
+SHIPPING_DIR=$WORKSPACE/N00bKernel
+# release dir
+RELEASE_DIR=$WORKSPACE/N00bReleases
+# OTA server dir
+OTA_DIR=$SERVER_DIR/N00bKernelDownloads
+# N00bKernel update dir (on device)
+DEVICE_UPDATE_DIR=/sdcard/N00bKernelUpdate
+#
+# Configure Environmental Variables
+#
+CLANG_PATH=$TOOLCHAIN_DIR/$CLANG_DIR
+GCC_PATH=$TOOLCHAIN_DIR/$GCC_DIR
 ####################### Start The Shit #######################
 # change directory to kernel source
 cd $SOURCE_DIR/
 # SET PATH FIRST
-export PATH=$CLANG_DIR/bin:$GCC_DIR/bin:$PATH
+export PATH=$CLANG_PATH/bin:$GCC_PATH/bin:$PATH
 # set ARCH & SUBARCH 
 export ARCH=$ARCH
 export SUBARCH=$ARCH
@@ -71,23 +81,27 @@ export CROSS_COMPILE=$CROSS_COMPILE_PREFIX
 # clean up old builds
 make clean
 make mrproper
-if [ ! -d $WORK_DIR/ ]; then
+if [ ! -d $OUT_DIR/ ]; then
     echo "[I] Creating Work Directory !"
-    mkdir -p $WORK_DIR/
+    mkdir -p $OUT_DIR/
 fi
-make O=$WORK_DIR clean
-make O=$WORK_DIR mrproper
+make O=$OUT_DIR clean
+make O=$OUT_DIR mrproper
 # write device_defconfig to .config
-make O=$WORK_DIR ARCH=$ARCH $CONFIG
+make O=$OUT_DIR ARCH=$ARCH $CONFIG
 # start build
 echo "[I] kernel compiling started...."
-make O=$WORK_DIR -j$JOBS ARCH=$ARCH CC=$CC CLANG_TRIPLE=$CLANG_TRIPLE_PREFIX CROSS_COMPILE=$CROSS_COMPILE_PREFIX
+make O=$OUT_DIR -j$JOBS ARCH=$ARCH CC=$CC CLANG_TRIPLE=$CLANG_TRIPLE_PREFIX CROSS_COMPILE=$CROSS_COMPILE_PREFIX
 clear
 echo "[I] kernel compiled...."
 sleep 2
 echo "[I] copying kernel to shipping directory...."
 # copy compiled kernel to shipping directory
 sleep 2
+if [ ! -d $SHIPPING_DIR/ ]; then
+    echo "[I] Creating Shipping Directory !"
+    mkdir -p $SHIPPING_DIR/
+fi
 # change directory to shipping directory
 cd $SHIPPING_DIR/
 # remove old zip (here kept as backup)
@@ -99,9 +113,17 @@ cp $KERNEL_DIR/$KERNEL $SHIPPING_DIR/
 echo "[I] building flashable zip...."
 make
 sleep 5
+if [ ! -d $RELEASE_DIR/ ]; then
+    echo "[I] Creating Work Directory !"
+    mkdir -p $RELEASE_DIR/
+fi
 # copy to release dir
 echo "[I] copying flashable zip to release directory..."
 cp $SHIPPING_DIR/N00bKernel-*.zip $RELEASE_DIR/
+if [ ! -d $OTA_DIR/ ]; then
+    echo "[I] Creating Work Directory !"
+    mkdir -p $OTA_DIR/
+fi
 # copy to server
 echo "[I] copying flashable zip to OTA server directory..."
 sudo cp $SHIPPING_DIR/N00bKernel-*.zip $OTA_DIR/
@@ -121,4 +143,4 @@ sleep 5
 echo "[I] rebooting device to recovery mode...."
 adb reboot recovery
 # verify the toolchain used
-cat $WORK_DIR/include/generated/compile.h
+cat $OUT_DIR/include/generated/compile.h
