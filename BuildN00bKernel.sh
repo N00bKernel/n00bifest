@@ -31,7 +31,7 @@ WORK_DIR=~/AndroidSystemDev/potter/potter_kernel/out
 # kernel out dir
 KERNEL_DIR=~/AndroidSystemDev/potter/potter_kernel/out/arch/arm64/boot
 # archiving dir
-SHIPPING_DIR=~/AndroidSystemDev/potter/lazyflasher
+SHIPPING_DIR=~/AndroidSystemDev/potter/N00bKernel
 # release dir
 RELEASE_DIR=~/AndroidSystemDev/potter/N00bReleases
 # OTA server dir
@@ -39,8 +39,7 @@ OTA_DIR=/var/www/html/N00bKernelDownloads
 # N00bKernel update dir (on device)
 DEVICE_UPDATE_DIR=/sdcard/N00bKernelUpdate
 # Toolchain dir
-TOOLCHAIN_DIR=~/AndroidSystemDev/aarch64-linux-android-4.9/bin
-#
+TOOLCHAIN_DIR=~/Toolchains
 # Configure Environmental Variables
 #
 # ARCH & SUBARCH
@@ -48,8 +47,8 @@ ARCH=arm64
 SUBARCH=arm64
 CONFIG=potter_defconfig
 CC=clang
-CLANG_DIR=~/AndroidSystemDev/linux-x86-android-9.0.0_r1-clang-4691093
-GCC_DIR=~/AndroidSystemDev/aarch64-linux-android-4.9
+CLANG_DIR=$TOOLCHAIN_DIR/AOSP/linux-x86-android-9.0.0_r1-clang-4691093
+GCC_DIR=$TOOLCHAIN_DIR/AOSP/aarch64-linux-android-4.9
 CLANG_TRIPLE_PREFIX=aarch64-linux-gnu-
 CROSS_COMPILE_PREFIX=aarch64-linux-android-
 # No of jobs
@@ -82,18 +81,19 @@ make O=$WORK_DIR ARCH=$ARCH $CONFIG
 # start build
 echo "[I] kernel compiling started...."
 make O=$WORK_DIR -j$JOBS ARCH=$ARCH CC=$CC CLANG_TRIPLE=$CLANG_TRIPLE_PREFIX CROSS_COMPILE=$CROSS_COMPILE_PREFIX
-clean
+clear
 echo "[I] kernel compiled...."
 sleep 2
 echo "[I] copying kernel to shipping directory...."
 # copy compiled kernel to shipping directory
-cp $KERNEL_DIR/$KERNEL $SHIPPING_DIR/
 sleep 2
 # change directory to shipping directory
 cd $SHIPPING_DIR/
 # remove old zip (here kept as backup)
-echo "[I] removing older flashable zips...."
+echo "[I] removing older flashable zips & kernel...."
+rm $KERNEL
 rm N00bKernel-*.zip
+cp $KERNEL_DIR/$KERNEL $SHIPPING_DIR/
 # archive and make flashable zip
 echo "[I] building flashable zip...."
 make
@@ -119,12 +119,5 @@ adb push N00bKernel-*.zip $DEVICE_UPDATE_DIR/
 sleep 5
 echo "[I] rebooting device to recovery mode...."
 adb reboot recovery
-# change directory back to kernel source (displacement = 0)
-# clean source dir
-cd $SOURCE_DIR
-echo "[I] cleaning working directory...."
-make clean
-make mrproper
-# clean out dir
-make O=$WORK_DIR clean
-make O=$WORK_DIR mrproper
+# verify the toolchain used
+cat out/include/generated/compile.h
