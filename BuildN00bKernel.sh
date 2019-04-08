@@ -21,7 +21,9 @@ echo "Company   : GEEKOFIA"
 echo "Hobby     : Banging bitches like you !"
 echo ""
 ####################### N00b Lab Initialization #######################
-# set directories
+# 
+# Configure Local Directories
+#
 # kernel source dir
 SOURCE_DIR=~/AndroidSystemDev/potter/potter_kernel
 # kernel build / work dir
@@ -29,7 +31,7 @@ WORK_DIR=~/AndroidSystemDev/potter/potter_kernel/out
 # kernel out dir
 KERNEL_DIR=~/AndroidSystemDev/potter/potter_kernel/out/arch/arm64/boot
 # archiving dir
-SHIPPING_DIR=~/AndroidSystemDev/potter/N00bKernel
+SHIPPING_DIR=~/AndroidSystemDev/potter/lazyflasher
 # release dir
 RELEASE_DIR=~/AndroidSystemDev/potter/N00bReleases
 # OTA server dir
@@ -38,14 +40,30 @@ OTA_DIR=/var/www/html/N00bKernelDownloads
 DEVICE_UPDATE_DIR=/sdcard/N00bKernelUpdate
 # Toolchain dir
 TOOLCHAIN_DIR=~/AndroidSystemDev/aarch64-linux-android-4.9/bin
+#
+# Configure Environmental Variables
+#
 # ARCH & SUBARCH
 ARCH=arm64
 SUBARCH=arm64
+CONFIG=potter_defconfig
+# SET PATH FIRST
+# PATH="<path to clang folder>/bin:<path to gcc folder>/bin:${PATH}"
+CC=clang
+CLANG_TRIPLE=aarch64-linux-gnu-
+CROSS_COMPILE=aarch64-linux-android-
+# No of jobs
+JOBS=$(nproc --ignore 4)
+# Kernel image Name
+KERNEL=Image.gz
 ####################### Start The Shit #######################
 # set ARCH & SUBARCH 
-export ARCH=$ARCH && export SUBARCH=$ARCH
+export ARCH=$ARCH
+export SUBARCH=$ARCH
 # set TOOLCHAIN
-export CROSS_COMPILE=$TOOLCHAIN_DIR/aarch64-linux-android-
+export CC=$CC
+export CLANG_TRIPLE=$CLANG_TRIPLE
+export CROSS_COMPILE=$CROSS_COMPILE
 # change directory to kernel source
 cd $SOURCE_DIR/
 # clean up old builds
@@ -58,17 +76,17 @@ fi
 make O=$WORK_DIR clean
 make O=$WORK_DIR mrproper
 # write device_defconfig to .config
-make O=$WORK_DIR potter_defconfig
+make O=$WORK_DIR $CONFIG
 # start build
-make O=$WORK_DIR -j$(nproc --ignore 4)
+make O=$WORK_DIR -j$JOBS
+sleep 2
+# copy compiled kernel to shipping directory
+cp $KERNEL_DIR/$KERNEL $SHIPPING_DIR/
 sleep 2
 # change directory to shipping directory
 cd $SHIPPING_DIR/
-# remove old kernel & zip (here kept as backup)
-rm Image.gz
+# remove old zip (here kept as backup)
 rm N00bKernel-*.zip
-# copy compiled kernel to shipping directory
-cp $KERNEL_DIR/Image.gz $SHIPPING_DIR/
 # archive and make flashable zip
 make
 sleep 5
