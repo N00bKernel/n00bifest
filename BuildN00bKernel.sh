@@ -32,6 +32,10 @@ SUBARCH=arm64
 WORKSPACE=~/Nooblab
 # server root
 SERVER_DIR=/var/www/html
+# OTA server dir
+OTA_DIR=N00bKernelDownloads
+# devide dir
+DEVICE_DIR=potter
 # Toolchain dir
 TOOLCHAIN_DIR=~/Toolchains
 CLANG_DIR=AOSP/clang
@@ -57,8 +61,6 @@ KERNEL_DIR=$OUT_DIR/arch/$ARCH/boot
 SHIPPING_DIR=$WORKSPACE/N00bKernel
 # release dir
 RELEASE_DIR=$WORKSPACE/N00bReleases
-# OTA server dir
-OTA_DIR=$SERVER_DIR/N00bKernelDownloads
 # N00bKernel update dir (on device)
 DEVICE_UPDATE_DIR=/sdcard/N00bKernelUpdate
 #
@@ -126,7 +128,7 @@ if [ ! -d $OTA_DIR/ ]; then
 fi
 # copy to server
 echo "[I] copying flashable zip to OTA server directory..."
-sudo cp $SHIPPING_DIR/N00bKernel-*.zip $OTA_DIR/
+sudo cp $SHIPPING_DIR/N00bKernel-*.zip $SERVER_DIR/$OTA_DIR/$DEVICE_DIR/
 #
 # Pushing Update To Device Via ADB
 #
