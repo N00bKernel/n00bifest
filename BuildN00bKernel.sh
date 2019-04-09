@@ -1,4 +1,5 @@
 #!/bin/bash
+sleep 10
 clear
 echo ""
 echo " __    _  _______  _______  _______ "
@@ -129,6 +130,10 @@ fi
 # copy to server
 echo "[I] copying flashable zip to OTA server directory..."
 sudo cp $SHIPPING_DIR/N00bKernel-*.zip $SERVER_DIR/$OTA_DIR/$DEVICE_DIR/
+OTA_URL=$(ip route show | grep "src" | cut -d" " -f9)
+echo ""
+echo "[I] OTA URL : http://$OTA_URL"
+echo ""
 #
 # Pushing Update To Device Via ADB
 #
