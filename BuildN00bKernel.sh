@@ -39,19 +39,11 @@ OTA_DIR=N00bKernelDownloads
 DEVICE_DIR=potter
 # Toolchain dir
 TOOLCHAIN_DIR=~/Toolchains
+# Clang dir
 CLANG_DIR=AOSP/clang
+# GCC dir
 GCC_DIR=AOSP/gcc
-# device def_config
-CONFIG=potter_defconfig
-# CC flag
-CC=clang
-CLANG_TRIPLE_PREFIX=aarch64-linux-gnu-
-CROSS_COMPILE_PREFIX=aarch64-linux-android-
-# Kernel image Name
-KERNEL=Image.gz
-# No of jobs
-JOBS=$(nproc --ignore 4)
-#######################################################################
+#############################################################
 # kernel source dir
 SOURCE_DIR=$WORKSPACE/source
 # kernel build / work dir
@@ -64,11 +56,25 @@ SHIPPING_DIR=$WORKSPACE/N00bKernel
 RELEASE_DIR=$WORKSPACE/N00bReleases
 # N00bKernel update dir (on device)
 DEVICE_UPDATE_DIR=/sdcard/N00bKernelUpdate
-#
-# Configure Environmental Variables
-#
+# Clang & GCC PATH
 CLANG_PATH=$TOOLCHAIN_DIR/$CLANG_DIR
 GCC_PATH=$TOOLCHAIN_DIR/$GCC_DIR
+#############################################################
+# Prefix & flags
+CC=clang
+CLANG_TRIPLE_PREFIX=aarch64-linux-gnu-
+CROSS_COMPILE_PREFIX=aarch64-linux-android-
+# Kernel image Name
+KERNEL=Image.gz
+#
+# Build details
+#
+CONFIG=potter_defconfig
+BUILD_VARIANT_01=N00bKernel
+BUILD_VARIANT_02=N00bKernel-400Hz
+KERNEL_VERSION=2.0.0
+# No of jobs
+JOBS=$(nproc --ignore 4)
 ####################### Start The Shit #######################
 # change directory to kernel source
 cd $SOURCE_DIR/
@@ -84,6 +90,9 @@ export CROSS_COMPILE=$CROSS_COMPILE_PREFIX
 # clean up old builds
 make clean
 make mrproper
+##########################
+# Out/Building Directory #
+##########################
 if [ ! -d $OUT_DIR/ ]; then
     echo "[I] Creating Work Directory !"
     mkdir -p $OUT_DIR/
@@ -101,31 +110,46 @@ sleep 2
 echo "[I] copying kernel to shipping directory...."
 # copy compiled kernel to shipping directory
 sleep 2
+######################
+# Shipping Directory #
+######################
 if [ ! -d $SHIPPING_DIR/ ]; then
     echo "[I] Creating Shipping Directory !"
     mkdir -p $SHIPPING_DIR/
+    echo "[I] Setting Up Shipping Directory !"
+    git clone https://github.com/N00bKernel/FlashableArchive.git $SHIPPING_DIR
 fi
 # change directory to shipping directory
 cd $SHIPPING_DIR/
 # remove old zip (here kept as backup)
 echo "[I] removing older flashable zips & kernel...."
 rm $KERNEL
-rm N00bKernel-*.zip
+rm N00bKernel-*.zip *.sha1
 cp $KERNEL_DIR/$KERNEL $SHIPPING_DIR/
 # archive and make flashable zip
 echo "[I] building flashable zip...."
-make
+make NAME=$BUILD_VARIANT_02 VERSION=$KERNEL_VERSION
 sleep 5
+#####################
+# Release Directory #
+#####################
 if [ ! -d $RELEASE_DIR/ ]; then
-    echo "[I] Creating Work Directory !"
+    echo "[I] Creating Release Directory !"
     mkdir -p $RELEASE_DIR/
 fi
 # copy to release dir
 echo "[I] copying flashable zip to release directory..."
 cp $SHIPPING_DIR/N00bKernel-*.zip $RELEASE_DIR/
-if [ ! -d $OTA_DIR/ ]; then
-    echo "[I] Creating Work Directory !"
-    mkdir -p $OTA_DIR/
+##############
+# OTA Server #
+##############
+if [ ! -d $SERVER_DIR/$OTA_DIR/ ]; then
+    echo "[I] Creating OTA Directory !"
+    mkdir -p $SERVER_DIR/$OTA_DIR/
+fi
+if [ ! -d $SERVER_DIR/$OTA_DIR/$DEVICE_DIR/ ]; then
+    echo "[I] Creating Device Dir In OTA Directory !"
+    mkdir -p $SERVER_DIR/$OTA_DIR/$DEVICE_DIR/
 fi
 # copy to server
 echo "[I] copying flashable zip to OTA server directory..."
@@ -134,9 +158,9 @@ OTA_URL=$(ip route show | grep "src" | cut -d" " -f9)
 echo ""
 echo "[I] OTA URL : http://$OTA_URL"
 echo ""
-#
-# Pushing Update To Device Via ADB
-#
+####################################
+# Pushing Update To Device Via ADB #
+####################################
 adb devices
 adb kill-server
 sleep 5
