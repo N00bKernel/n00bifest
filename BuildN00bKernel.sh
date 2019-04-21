@@ -146,6 +146,7 @@ cp $SHIPPING_DIR/N00bKernel-*.zip $RELEASE_DIR/
 if [ ! -d $SERVER_DIR/$OTA_DIR/ ]; then
     echo "[I] Creating OTA Directory !"
     mkdir -p $SERVER_DIR/$OTA_DIR/
+    git clone https://github.com/N00bKernel/OTA_DIR.git $SERVER_DIR/$OTA_DIR/
 fi
 if [ ! -d $SERVER_DIR/$OTA_DIR/$DEVICE_DIR/ ]; then
     echo "[I] Creating Device Dir In OTA Directory !"
