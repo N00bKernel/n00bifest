@@ -1,5 +1,4 @@
 #!/bin/bash
-sleep 10
 clear
 echo ""
 echo " __    _  _______  _______  _______ "
@@ -27,6 +26,7 @@ echo ""
 #
 # libncurses5 <-- bhosdiwala
 # ARCH & SUBARCH
+DEVICE_CODE=
 ARCH=arm64
 SUBARCH=arm64
 # workspace
@@ -36,13 +36,13 @@ SERVER_DIR=/var/www/html
 # OTA server dir
 OTA_DIR=N00bKernelDownloads
 # devide dir
-DEVICE_DIR=potter
+DEVICE_DIR=$DEVICE_CODE
 # Toolchain dir
 TOOLCHAIN_DIR=~/Toolchains
 # Clang dir
-CLANG_DIR=AOSP/clang
+CLANG_DIR=DTC/clang
 # GCC dir
-GCC_DIR=AOSP/gcc
+GCC_DIR=DTC/gcc
 #############################################################
 # kernel source dir
 SOURCE_DIR=$WORKSPACE/source
@@ -63,18 +63,18 @@ GCC_PATH=$TOOLCHAIN_DIR/$GCC_DIR
 # Prefix & flags
 CC=clang
 CLANG_TRIPLE_PREFIX=aarch64-linux-gnu-
-CROSS_COMPILE_PREFIX=aarch64-linux-android-
+CROSS_COMPILE_PREFIX=aarch64-linux-gnu-
 # Kernel image Name
-KERNEL=Image.gz
+KERNEL=Image.gz-dtb
 #
 # Build details
 #
-CONFIG=potter_defconfig
-BUILD_VARIANT_01=N00bKernel
-BUILD_VARIANT_02=N00bKernel-400Hz
-KERNEL_VERSION=2.0.0
+CONFIG=${DEVICE_CODE}_defconfig
+BUILD_VARIANT_01=N00bKernel-$DEVICE_CODE
+# BUILD_VARIANT_02=N00bKernel-400Hz
+KERNEL_VERSION=0.0.0
 # No of jobs
-JOBS=$(nproc --ignore 4)
+JOBS=$(nproc --all)
 ####################### Start The Shit #######################
 # change directory to kernel source
 cd $SOURCE_DIR/
@@ -90,6 +90,17 @@ export CROSS_COMPILE=$CROSS_COMPILE_PREFIX
 # clean up old builds
 make clean
 make mrproper
+#####################
+# Check Clang & GCC #
+#####################
+echo "==========================="
+echo " CLANG_PATH = ${CLANG_PATH}"
+echo " GCC_PATH = ${GCC_PATH}"
+echo "==========================="
+echo " CC = ${CC}"
+echo " CLANG_TRIPLE = ${CLANG_TRIPLE}"
+echo " CROSS_COMPILE = ${CROSS_COMPILE}"
+echo "==========================="
 ##########################
 # Out/Building Directory #
 ##########################
@@ -101,6 +112,7 @@ make O=$OUT_DIR clean
 make O=$OUT_DIR mrproper
 # write device_defconfig to .config
 make O=$OUT_DIR ARCH=$ARCH $CONFIG
+make O=$OUT_DIR menuconfig
 # start build
 echo "[I] kernel compiling started...."
 make O=$OUT_DIR -j$JOBS ARCH=$ARCH CC=$CC CLANG_TRIPLE=$CLANG_TRIPLE_PREFIX CROSS_COMPILE=$CROSS_COMPILE_PREFIX
@@ -174,5 +186,5 @@ adb push N00bKernel-*.zip $DEVICE_UPDATE_DIR/
 sleep 5
 echo "[I] rebooting device to recovery mode...."
 adb reboot recovery
-# verify the toolchain used
+verify the toolchain used
 cat $OUT_DIR/include/generated/compile.h
